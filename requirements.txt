@@ -1,0 +1,10 @@
+dotenv
+fastapi
+matplotlib
+numpy
+pandas
+plotly
+psycopg
+psycopg2
+sqlalchemy
+uvicorn
