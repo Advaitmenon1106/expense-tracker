@@ -1,41 +1,77 @@
 from sqlalchemy.orm import sessionmaker
 from backend.utils.data_models import Expense
 from backend.services.DB_Create import engine
+from uuid import UUID
 
 Session = sessionmaker(bind=engine)
-session = Session()
+
+# Create a new session for each operation
+def get_session():
+    return Session()
 
 # Create
-def create_expense(name, amount, date):
-    new_expense = Expense(name=name, amount=amount, date=date)
-    session.add(new_expense)
-    session.commit()
-    return new_expense
+def create_expense(name, amount, date, tags=None, remarks=None):
+    session = get_session()
+    try:
+        new_expense = Expense(name=name, amount=amount, date=date, tags=tags, remarks=remarks)
+        session.add(new_expense)
+        session.commit()
+        return new_expense
+    except Exception as e:
+        session.rollback()
+        raise e
+    finally:
+        session.close()
 
 # Read
 def get_expenses():
-    return session.query(Expense).all()
+    session = get_session()
+    try:
+        return session.query(Expense).all()
+    finally:
+        session.close()
 
 def get_expense_by_id(expense_id):
-    return session.query(Expense).filter(Expense.id == expense_id).first()
+    session = get_session()
+    try:
+        expense_id = UUID(expense_id)
+        return session.query(Expense).filter(Expense.id == expense_id).first()
+    finally:
+        session.close()
 
 # Update
 def update_expense(expense_id, name=None, amount=None, date=None):
-    expense = session.query(Expense).filter(Expense.id == expense_id).first()
-    if expense:
-        if name:
-            expense.name = name
-        if amount:
-            expense.amount = amount
-        if date:
-            expense.date = date
-        session.commit()
-    return expense
+    session = get_session()
+    try:
+        expense_id = UUID(expense_id)
+        expense = session.query(Expense).filter(Expense.id == expense_id).first()
+        if expense:
+            if name:
+                expense.name = name
+            if amount:
+                expense.amount = amount
+            if date:
+                expense.date = date
+            session.commit()
+        return expense
+    except Exception as e:
+        session.rollback()
+        raise e
+    finally:
+        session.close()
 
 # Delete
 def delete_expense(expense_id):
-    expense = session.query(Expense).filter(Expense.id == expense_id).first()
-    if expense:
-        session.delete(expense)
-        session.commit()
-    return expense
+    session = get_session()
+    try:
+        expense_id = UUID(expense_id)
+        expense = session.query(Expense).filter(Expense.id == expense_id).first()
+        if expense:
+            session.delete(expense)
+            session.commit()
+        return expense
+    except Exception as e:
+        session.rollback()
+        raise e
+    finally:
+        session.close()
