@@ -1,5 +1,18 @@
 @import url("https://fonts.googleapis.com/css2?family=Quantico:ital,wght@0,400;0,700;1,400;1,700&display=swap");
 
+a{
+  text-decoration: none;
+  color: inherit;
+}
+
+/* a:focus {
+  text-decoration: none;
+}
+
+a:visited {
+  text-decoration: None;
+} */
+
 #sidebar {
   width: 20vw;
   background-color: #1b1b1b;
