@@ -1,0 +1,42 @@
+@import url("https://fonts.googleapis.com/css2?family=Quantico:ital,wght@0,400;0,700;1,400;1,700&display=swap");
+
+.hero-text {
+  font-family: "Quantico";
+  color: white;
+  font-size: 5vh;
+  margin-left: 5%;
+  margin-top: 2%;
+}
+
+#form {
+  font-family: "Quantico";
+  margin-top: 5vh;
+  display: grid;
+  color: white;
+  width: 70vw;
+  grid-template-columns: 30vw 30vw;
+  grid-auto-rows: 7vh;
+  /* justify-items: center; */
+  /* align-items: center; */
+  justify-content: center;
+  /* align-content: center; */
+}
+
+.text-label {
+  height: 3vh;
+  font-size: 2.5vh;
+}
+
+.text-label-input {
+  font-family: "Quantico";
+  height: 5vh;
+  border-radius: 1vw;
+  background-color: #1b1b1b;
+  border: 1px solid #1b1b1b;
+  color: white;
+  padding-left: 1vw;
+  padding-right: 1vw;
+  padding-top: 0.5vh;
+  padding-bottom: 0.5vh;
+  font-size: 2.5vh;
+}
