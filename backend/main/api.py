@@ -6,8 +6,8 @@ from uuid import UUID
 app = FastAPI()
 
 @app.post('/insert-expense')
-async def insert_expense(expense_name: str, amount: float, date: DateType, tags: str = None, remarks: str = None):
-    return create_expense(name=expense_name, amount=amount, date=date, tags=tags, remarks=remarks)
+async def insert_expense(expense_name: str, amount: float, date: DateType, inflow:bool, tags: str = None, remarks: str = None):
+    return create_expense(name=expense_name, amount=amount, date=date, tags=tags, remarks=remarks, inflow=inflow)
 
 
 @app.get('/retrieve-all-expenses')

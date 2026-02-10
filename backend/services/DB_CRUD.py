@@ -10,10 +10,10 @@ def get_session():
     return Session()
 
 # Create
-def create_expense(name, amount, date, tags=None, remarks=None):
+def create_expense(name, amount, date, inflow, tags=None, remarks=None):
     session = get_session()
     try:
-        new_expense = Expense(name=name, amount=amount, date=date, tags=tags, remarks=remarks)
+        new_expense = Expense(name=name, amount=amount, inflow=inflow, date=date, tags=tags, remarks=remarks)
         session.add(new_expense)
         session.commit()
         return new_expense
@@ -40,7 +40,7 @@ def get_expense_by_id(expense_id):
         session.close()
 
 # Update
-def update_expense(expense_id, name=None, amount=None, date=None):
+def update_expense(expense_id, name=None, amount=None, date=None, inflow=None):
     session = get_session()
     try:
         expense_id = UUID(expense_id)
@@ -52,6 +52,8 @@ def update_expense(expense_id, name=None, amount=None, date=None):
                 expense.amount = amount
             if date:
                 expense.date = date
+            if inflow:
+                expense.inflow = inflow
             session.commit()
         return expense
     except Exception as e:
