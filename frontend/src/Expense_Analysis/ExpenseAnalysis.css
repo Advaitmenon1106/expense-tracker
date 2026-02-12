@@ -1,0 +1,33 @@
+@import url("https://fonts.googleapis.com/css2?family=Quantico:ital,wght@0,400;0,700;1,400;1,700&display=swap");
+
+#all-menus {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  align-self: center;
+}
+
+.menu-option {
+  font-family: "Quantico";
+  position: relative;
+  color: white;
+  margin: 0 3vh;
+  font-size: 3vh;
+}
+
+.menu-option::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -5px;
+  width: 100%;
+  height: 3px;
+  background: white;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s ease;
+}
+
+.menu-option:hover::after {
+  transform: scaleX(1);
+}
