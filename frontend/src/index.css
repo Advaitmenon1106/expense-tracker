@@ -14,6 +14,7 @@ body{
   display: flex;
   flex-direction: row; /* Ensures Sidebar and Outlet are side by side */
   height: 100vh; /* Full height of the viewport */
+  align-items: flex-start;
 }
 
 #sidebar {
