@@ -90,7 +90,7 @@ export function ExpenseOperations() {
     };
 
     return (
-        <div>
+        <div className="main-content">
             <div className="hero-text">Enter an Expense</div>
             <form id="form" onSubmit={handleSubmit}>
                 {expenseFormFields.map((field) => (
