@@ -4,7 +4,13 @@
   display: flex;
   justify-content: center;
   width: 100%;
-  align-self: center;
+  /* align-self: center; */
+  align-items: flex-start;
+  /* border-bottom: 3px solid darkgray; */
+  /* box-shadow: 0 2px 8px rgb(87, 87, 87); */
+  background-color: #1b1b1b;
+  padding-bottom: 2vh;
+  padding-top: 2vh;
 }
 
 .menu-option {
@@ -13,6 +19,11 @@
   color: white;
   margin: 0 3vh;
   font-size: 3vh;
+  /* height: fit-content; */
+}
+
+.menu-option:hover {
+  cursor: pointer;
 }
 
 .menu-option::after {
