@@ -6,6 +6,7 @@ import { createBrowserRouter, RouterProvider, Outlet } from 'react-router-dom'
 import { HomePage } from './Home/HomePage'
 import { ExpenseOperations } from './Expense_Operations/ExpenseOperations'
 import { ExpenseAnalysis } from './Expense_Analysis/ExpenseAnalysis'
+import ShowAll from './Expense_Analysis/All_Expenses/ShowAll'
 
 
 const router = createBrowserRouter([
@@ -29,7 +30,13 @@ const router = createBrowserRouter([
       },
       {
         path: 'analyse',
-        element: <ExpenseAnalysis />
+        element: <ExpenseAnalysis />,
+        children: [
+          {
+            path: 'show-all',
+            element: <ShowAll />
+          }
+        ]
       }
     ]
   }
