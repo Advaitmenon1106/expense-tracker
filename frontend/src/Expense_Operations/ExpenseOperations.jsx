@@ -65,7 +65,7 @@ export function ExpenseOperations() {
         });
 
         const response = await fetch(
-            `http://localhost:8000/insert-expense?${params.toString()}`,
+            `http://0.0.0.0:8000/insert-expense?${params.toString()}`,
             {
                 method: "POST"
             }
