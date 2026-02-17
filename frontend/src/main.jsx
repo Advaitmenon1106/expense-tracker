@@ -8,7 +8,6 @@ import { ExpenseOperations } from './Expense_Operations/ExpenseOperations'
 import { ExpenseAnalysis } from './Expense_Analysis/ExpenseAnalysis'
 import ShowAll from './Expense_Analysis/All_Expenses/ShowAll'
 
-
 const router = createBrowserRouter([
   {
     path: '/',
