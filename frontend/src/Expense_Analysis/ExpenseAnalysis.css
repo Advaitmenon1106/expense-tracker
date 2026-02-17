@@ -13,6 +13,10 @@
   padding-top: 2vh;
 }
 
+.analysis-page {
+  flex: 1;
+}
+
 .menu-option {
   font-family: "Quantico";
   position: relative;

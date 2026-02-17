@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import ShowAll from './All_Expenses/ShowAll'
 import './ExpenseAnalysis.css'
-import { useState } from 'react'
+import { Outlet } from 'react-router-dom'
 
 
 function MenuTab({ menuDisplay, onClickFn }) {
@@ -13,32 +13,22 @@ function MenuTab({ menuDisplay, onClickFn }) {
 }
 
 export function ExpenseAnalysis() {
-    const [currentView, setCurrentView] = useState(null)
-
-    const handleShowAll = async () => {
-        const response = await fetch(
-            `http://0.0.0.0:8000/retrieve-all-expenses`,
-            {
-                method: "GET"
-            }
-        );
-        const result = await response.json();
-        console.log(result);
-        setCurrentView(<ShowAll data={result} />);
-    }
-
     return (
-        <div id="all-menus">
-            <Link to={'/analyse/show-all'}>
-                <MenuTab menuDisplay={"Show All"} onClickFn={handleShowAll} />
-            </Link>
+        <div className="analysis-page">
 
-            <MenuTab menuDisplay={"Apply Filters On Your Data"} />
-            <MenuTab menuDisplay={"Static Analyses"} />
+            <div id="all-menus">
+                <Link to="show-all">
+                    <MenuTab menuDisplay="Show All" />
+                </Link>
 
-            <div>
-                {currentView}
+                <MenuTab menuDisplay="Apply Filters On Your Data" />
+                <MenuTab menuDisplay="Static Analyses" />
             </div>
+
+            <div className="content-area">
+                <Outlet />
+            </div>
+
         </div>
-    )
+    );
 }
