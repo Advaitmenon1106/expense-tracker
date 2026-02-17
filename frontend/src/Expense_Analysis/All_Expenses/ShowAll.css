@@ -1,0 +1,40 @@
+@import url("https://fonts.googleapis.com/css2?family=Quantico:ital,wght@0,400;0,700;1,400;1,700&display=swap");
+
+.expense-table {
+  width: 100%;
+  max-width: 1000px;
+  margin: 2rem auto;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  color: white;
+  font-family: "Quantico";
+}
+
+th, td {
+  padding: 1rem 1.5rem;
+  text-align: left;
+}
+
+thead {
+  border-bottom: 2px solid rgba(255,255,255,0.15);
+}
+
+tbody tr {
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+th {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.7);
+}
+
+tbody tr:nth-child(odd) {
+  background-color: rgb(48, 48, 48);
+}
+
+tbody tr:hover {
+  background-color: rgb(31, 31, 31);
+}
