@@ -4,7 +4,7 @@ import './ExpenseAnalysis.css'
 import { Outlet } from 'react-router-dom'
 
 
-function MenuTab({ menuDisplay, onClickFn }) {
+export function MenuTab({ menuDisplay, onClickFn }) {
     return (
         <div className="menu-option" onClick={onClickFn}>
             {menuDisplay}
