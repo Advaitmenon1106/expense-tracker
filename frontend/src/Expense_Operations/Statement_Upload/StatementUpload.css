@@ -1,0 +1,34 @@
+@import url("https://fonts.googleapis.com/css2?family=Quantico:ital,wght@0,400;0,700;1,400;1,700&display=swap");
+
+.hero-text {
+  font-family: "Quantico";
+  
+  color: white;
+  font-size: 2em;
+  padding-left: 5%;
+  padding-top: 1vh;
+  padding-bottom: 3vh;
+  /* width: 100%; */
+}
+
+.main-content {
+  flex:1;
+}
+
+#statement-file-upload {
+    display: none;
+}
+
+.custom-file-upload {
+    background-color: rgba(158, 149, 149, 0.973);
+    width: 40em;
+    height: 10em;
+    border: 1px solid red;
+    display: block;
+    justify-self: center;
+    border: 2px ;
+}
+
+.custom-file-upload:hover {
+    cursor: pointer;
+}
