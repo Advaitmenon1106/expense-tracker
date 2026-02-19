@@ -7,6 +7,8 @@ import { HomePage } from './Home/HomePage'
 import { ExpenseOperations } from './Expense_Operations/ExpenseOperations'
 import { ExpenseAnalysis } from './Expense_Analysis/ExpenseAnalysis'
 import ShowAll from './Expense_Analysis/All_Expenses/ShowAll'
+import { AddSingleExpense } from './Expense_Operations/Add_Single/AddSingleExpense'
+import { StatementUpload } from './Expense_Operations/Statement_Upload/StatementUpload'
 
 const router = createBrowserRouter([
   {
@@ -25,13 +27,32 @@ const router = createBrowserRouter([
       },
       {
         path: 'add-expense',
-        element: <ExpenseOperations />
+        element: <ExpenseOperations />,
+        children: [
+          {
+            index: true,
+            element: <AddSingleExpense />
+          },
+          {
+            path: 'add-single',
+            element: <AddSingleExpense />
+          },
+          {
+            path: 'statement-upload',
+            element: <StatementUpload />
+          }
+        ]
       },
       {
         path: 'analyse',
         element: <ExpenseAnalysis />,
         children: [
           {
+            index: true,
+            element: <ShowAll />
+          },
+          {
+            index: true,
             path: 'show-all',
             element: <ShowAll />
           }
