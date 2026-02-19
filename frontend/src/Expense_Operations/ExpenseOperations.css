@@ -1,49 +1,48 @@
 @import url("https://fonts.googleapis.com/css2?family=Quantico:ital,wght@0,400;0,700;1,400;1,700&display=swap");
 
-.hero-text {
-  font-family: "Quantico";
-  
-  color: white;
-  font-size: 5vh;
-  padding-left: 5%;
-  padding-top: 1vh;
-  padding-bottom: 3vh;
-  /* width: 100%; */
-  background-color: #1b1b1b;
-}
-
-.main-content {
-  flex:1;
-}
-
-#form {
-  font-family: "Quantico";
-  /* margin-top: 5vh; */
-  display: grid;
-  color: white;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  max-width: 900px;
+#all-menus {
+  display: flex;
+  justify-content: center;
   width: 100%;
-  margin: 5vh auto 0 auto;
-}
-
-.text-label {
-  height: 3vh;
-  font-size: 2.5vh;
-}
-
-.text-label-input {
-  font-family: "Quantico";
-  height: 5vh;
-  border-radius: 1vw;
+  /* align-self: center; */
+  align-items: flex-start;
+  /* border-bottom: 3px solid darkgray; */
+  /* box-shadow: 0 2px 8px rgb(87, 87, 87); */
   background-color: #1b1b1b;
-  border: 1px solid #1b1b1b;
+  padding-bottom: 2vh;
+  padding-top: 2vh;
+}
+
+.analysis-page {
+  flex: 1;
+}
+
+.menu-option {
+  font-family: "Quantico";
+  position: relative;
   color: white;
-  padding-left: 1vw;
-  padding-right: 1vw;
-  padding-top: 0.5vh;
-  padding-bottom: 0.5vh;
-  font-size: 2.5vh;
+  margin: 0 3vh;
+  font-size: 3vh;
+  /* height: fit-content; */
+}
+
+.menu-option:hover {
+  cursor: pointer;
+}
+
+.menu-option::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -5px;
+  width: 100%;
+  height: 3px;
+  background: white;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s ease;
+}
+
+.menu-option:hover::after {
+  transform: scaleX(1);
 }
