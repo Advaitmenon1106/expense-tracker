@@ -2,7 +2,6 @@
 
 .hero-text {
   font-family: "Quantico";
-  
   color: white;
   font-size: 2em;
   padding-left: 5%;
@@ -19,16 +18,50 @@
     display: none;
 }
 
-.custom-file-upload {
-    background-color: rgba(158, 149, 149, 0.973);
-    width: 40em;
-    height: 10em;
+#doc-upload-svg {
+  height: 4rem;
+  width: auto;
+  display: block;
+  margin: auto;
+}
+
+#statement-upload-instructions {
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 1rem;
+  font-family: "Quantico";
+  font-size: 1.3vw;
+}
+
+#statement-upload-instructions-2 {
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 0.3rem;
+  font-family: "Quantico";
+  font-size: 1.3vw;
+}
+
+#custom-file-upload {
+    background-color: rgba(71, 71, 71, 0.507);
+    width: auto;
+    height: auto;
     border: 1px solid red;
     display: block;
     justify-self: center;
-    border: 2px ;
+    border: 2px dashed;
+    border-radius: 1rem;
+    padding: 1em 1em 1em 1em;
 }
 
-.custom-file-upload:hover {
+#custom-file-upload:hover {
     cursor: pointer;
+}
+
+.file-uploaded-status {
+  color: white;
+  font-family: "Quantico";
 }
