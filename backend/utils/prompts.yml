@@ -1,0 +1,2 @@
+pixtral_prompt: |
+  Given the page image of a bank statement, and the JSON extraction template to be followed, extract the tabular data / line items exactly as it is and populate the extraction template.
