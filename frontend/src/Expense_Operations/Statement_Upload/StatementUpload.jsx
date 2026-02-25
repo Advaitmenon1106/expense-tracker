@@ -60,6 +60,12 @@ export function StatementUpload() {
         setUploadedFiles((prev) => prev.filter((_, index) => index !== indexToRemove));
     };
 
+    const handleProcess = () => {
+        // Logic to send files to your backend/OCR engine
+        console.log("Processing files:", uploadedFiles);
+        alert(`Sending ${uploadedFiles.length} statement(s) for analysis...`);
+    };
+
     return (
         <div className="upload-wrapper">
             <div className="hero-text">
@@ -80,29 +86,27 @@ export function StatementUpload() {
                 <span id="statement-upload-instructions-2">Or drag and drop</span>
             </label>
 
-            {/* NEATER LIST CONTAINER */}
             {uploadedFiles.length > 0 && (
-                <div className="uploaded-files-container">
-                    {uploadedFiles.map((f, index) => {
-                        const ext = getExtension(f.name);
-                        const icon = SVG_MAPPER[ext];
-
-                        return (
-                            <div className="file-row" key={`${f.name}-${index}`}>
-                                <div className="file-info">
-                                    {icon}
-                                    <span className="file-name">{f.name}</span>
+                <div className="process-container">
+                    <div className="uploaded-files-container">
+                        {uploadedFiles.map((f, index) => {
+                            const ext = getExtension(f.name);
+                            return (
+                                <div className="file-row" key={`${f.name}-${index}`}>
+                                    <div className="file-info">
+                                        {SVG_MAPPER[ext]}
+                                        <span className="file-name">{f.name}</span>
+                                    </div>
+                                    <button className="remove-file-btn" onClick={() => removeFile(index)}>&times;</button>
                                 </div>
-                                <button
-                                    className="remove-file-btn"
-                                    onClick={() => removeFile(index)}
-                                    title="Remove file"
-                                >
-                                    &times;
-                                </button>
-                            </div>
-                        );
-                    })}
+                            );
+                        })}
+                    </div>
+
+                    {/* ACTION BUTTON */}
+                    <button className="analyze-button" onClick={handleProcess}>
+                        Analyze Statements
+                    </button>
                 </div>
             )}
         </div>
