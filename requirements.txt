@@ -1,8 +1,10 @@
 dotenv
 fastapi
 matplotlib
+mistralai
 numpy
 pandas
+pdf2image
 plotly
 psycopg
 psycopg2
