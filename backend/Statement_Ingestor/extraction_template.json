@@ -1,0 +1,26 @@
+[
+    {
+        "field": "id",
+        "description": null
+    },
+    {
+        "field": "name",
+        "description": "Name of the expense. Could also be the name of the vendor or creditor executing the transaction"
+    },
+    {
+        "field": "amount",
+        "description": "Amount of the transaction/cashflow in the statement. Do not include any mathematical signs (positive, negative etc)"
+    },
+    {
+        "field": "inflow",
+        "description": "Either 1 or 0. If the transaction is a cash output, return 0. If the amount has been credited or it's an inflow, return 1. This can be understood also from any negative or non-negative amounts in the bank statement against the amount."
+    },
+    {
+        "field": "date",
+        "description": "Date of the transaction"
+    },
+    {
+        "field": "remarks",
+        "description": "Any additional remarks given in the statement. If none, only output 'null'."
+    }
+]
