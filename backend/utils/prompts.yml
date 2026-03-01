@@ -1,2 +1,9 @@
-pixtral_prompt: |
-  Given the page image of a bank statement, and the JSON extraction template to be followed, extract the tabular data / line items exactly as it is and populate the extraction template.
+statement_ingestor:
+  pixtral_prompt_system: |
+    Extract tabular data or line items from the provided bank statement page image and populate the given JSON extraction template. 
+    Add a "value" key to each field in the template. If no value is found for a field, set "value" to 'null'. No extra explanations or elaboration at any point.
+    Do not add any extra markdown fences or markdown formatting.
+  
+  pixtral_prompt_human: |
+    Here is the JSON extraction template:
+    {json_extraction_template}
