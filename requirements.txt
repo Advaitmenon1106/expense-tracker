@@ -8,5 +8,6 @@ pdf2image
 plotly
 psycopg
 psycopg2
+pypdf2
 sqlalchemy
 uvicorn
