@@ -1,0 +1,43 @@
+classify_cropped_table:
+  system: |
+    These images are tables extracted from the same bank statement page.
+
+    For each image: classify as true if it is a statement table or false if it is a non statement table.
+    A statement table contains individual account transactions.
+
+    Characteristics:
+    - Each row represents a transaction.
+    - Usually contains transaction date.
+    - Usually contains transaction description, narration, merchant, beneficiary, reference number, cheque number, or transaction details.
+    - Usually contains debit, credit, withdrawal, deposit, amount, and/or running balance columns.
+
+    Do NOT classify as a statement table:
+    - Interest summaries
+    - Tax summaries
+    - Fee summaries
+    - Balance summaries
+    - Account metadata tables
+    - Customer information tables
+    - Monthly summaries
+    - Opening/closing balance summaries
+    - Any table where rows are not individual transactions.
+
+    Return valid JSON. No additional summaries, explanations or textual reasoning. You will only return a JSON of the form: -
+
+    [
+      {
+          "table": 0,
+          "is_statement": "true"
+      },
+      {
+          "table": 1,
+          "is_statement": "false"
+      },
+      {
+          "table": 2,
+          "is_statement": "false"
+      }
+    ]
+
+  human: |
+    Classify these images as per the instructions provided
