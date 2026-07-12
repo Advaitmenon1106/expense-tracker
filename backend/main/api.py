@@ -15,8 +15,8 @@ app.add_middleware(
 )
 
 @app.post('/insert-expense')
-async def insert_expense(expense_name: str, amount: float, date: DateType, inflow:bool, tags: str = None, remarks: str = None):
-    return create_expense(name=expense_name, amount=amount, date=date, tags=tags, remarks=remarks, inflow=inflow)
+async def insert_expense(expense_name: str, amount: float, date: DateType, inflow:bool, post_transaction_balance:float, tags: str = None, remarks: str = None):
+    return create_expense(name=expense_name, amount=amount, date=date, tags=tags, post_transaction_balance=post_transaction_balance, remarks=remarks, inflow=inflow)
 
 
 @app.get('/retrieve-all-expenses')
