@@ -14,7 +14,7 @@ from pypdf import PdfReader, PdfWriter
 import io
 from pdf2image import convert_from_bytes
 import pandas as pd
-from backend.utils.llm_tools import send_image_to_mistral
+from backend.utils.llm_tools import send_image_to_mistral, send_image_to_ollama
 import re
 
 load_dotenv()
@@ -54,10 +54,13 @@ def ensure_models_loaded():
     )
 
 
+
 class DocIngestor:
-    def __init__(self, user_inputs:list[UploadFile], pdf_password=""):
+    def __init__(self, user_inputs:list[UploadFile], pdf_password="", concurrency=1, imgs_per_call = 2):
         self.user_inputs = user_inputs
         self.pdf_password = pdf_password
+        self.sem = asyncio.Semaphore(concurrency)
+        self.imgs_per_call = imgs_per_call
 
         with open('/home/advait/expense-tracker/backend/Statement_Ingestor/prompts.yml', 'r') as f:
             prompts= yaml.safe_load(f)
@@ -112,7 +115,7 @@ class DocIngestor:
                     all_inputs['images'].append(
                         {
                             'filename': user_input.filename,
-                            'type': 'image',
+                            'type': 'PDF',
                             'inputs': images
                         }
                     )
@@ -128,11 +131,30 @@ class DocIngestor:
                     {
                         'filename': user_input.filename,
                         'type': 'spreadsheet',
-                        'inputs': pd.read_excel(user_input.file.read())
+                        'inputs': pd.read_excel(user_input.file)
                     }
                 )
 
         self.all_inputs = all_inputs
+
+    
+
+    async def classify(self, imgs):
+        async with self.sem:
+            response = await send_image_to_mistral(
+                imgs,
+                self.prompts["classify_cropped_table"]["system"],
+                self.prompts["classify_cropped_table"]["human"],
+            )
+
+        if response.startswith("```"):
+            response = re.search(
+                r"```(?:json)?\s*(.*?)\s*```",
+                response,
+                re.DOTALL,
+            ).group(1)
+
+        return json.loads(response)
 
 
     async def table_extract(self):
@@ -141,7 +163,6 @@ class DocIngestor:
 
         table_struct_processor = self.struct_processor
         table_struct_model = self.struct_model
-
         
 
         image_entries:list[dict] = self.all_inputs['images']
@@ -182,66 +203,52 @@ class DocIngestor:
             corresponding_table_detection_results = table_det_outputs[i]
 
             for j, img in enumerate(corresponding_statement_page_images):
-
-                detected_tables_per_page = []
                 page_detection = corresponding_table_detection_results[j]
 
                 if len(page_detection['boxes']) == 0:
                     continue
 
-                if len(page_detection['boxes']) == 1:
-                    x1, y1, x2, y2 = map(int, page_detection["boxes"][0].tolist())
-
+                multiple_tables = []
+                for coords in page_detection["boxes"]:
+                    x1, y1, x2, y2 = map(int, coords.tolist())
+                    
                     x1 = max(0, x1 - padding)
                     y1 = max(0, y1 - padding)
                     x2 = min(img.width, x2 + padding)
                     y2 = min(img.height, y2 + padding)
 
-                    detected_tables_per_page.append(img.crop((x1, y1, x2, y2)))
-                    image_entries[i]['detected_tables_images'].append(detected_tables_per_page)
+                    table_img = img.crop((x1, y1, x2, y2))
+                    multiple_tables.append(table_img)
 
-                else:
-                    multiple_tables = []
-                    for coords in page_detection["boxes"]:
-                        x1, y1, x2, y2 = map(int, coords.tolist())
-                        
-                        x1 = max(0, x1 - padding)
-                        y1 = max(0, y1 - padding)
-                        x2 = min(img.width, x2 + padding)
-                        y2 = min(img.height, y2 + padding)
+                
+                actual_tables = []
 
-                        table_img = img.crop((x1, y1, x2, y2))
-                        multiple_tables.append(table_img)
+                tasks = []
 
-                    response = await send_image_to_mistral(multiple_tables, self.prompts['classify_cropped_table']['system'], self.prompts['classify_cropped_table']['human'])
+                for idx in range(0, len(multiple_tables), self.imgs_per_call):
+                    imgs = multiple_tables[idx:idx+self.imgs_per_call]
 
-                    try:
-                        classfns = json.loads(response)
+                    tasks.append(self.classify(imgs))
 
-                    except Exception:
-                        json_match = re.search(
-                            r'```(?:json)?\s*(.*?)\s*```',
-                            response,
-                            re.DOTALL
-                        )
+                batch_results = await asyncio.gather(*tasks)
+                classfns = [
+                    item
+                    for batch in batch_results
+                    for item in batch
+                ]
 
-                        if json_match:
-                            classfns = json.loads(json_match.group(1))
-                        else:
-                            classfns = json.loads(
-                                response.strip('```').strip('json')
-                            )
+                for k, cl in enumerate(classfns):
+                    if cl["is_statement"].lower() == "true":
+                        actual_tables.append(multiple_tables[k])
 
-                    # Single code path from here onward
+                image_entries[i]['detected_tables_images'].append(actual_tables)
 
-                    actual_tables = []
+            print(image_entries)
 
-                    for k, cl in enumerate(classfns):
-                        if cl['is_statement'].lower() == "true" or "true" in cl['is_statement'].lower():
-                            actual_tables.append(multiple_tables[k])
+        
+        # structure extraction from image_entries['detected_tables_images']: -
 
-                    image_entries[i]['detected_tables_images'].append(actual_tables)
-                    
+        
 
 
 import asyncio
@@ -289,7 +296,7 @@ async def main():
 
                     # Optional: save crops to inspect
                     table_img.save(
-                        f"debug_page_{page_idx+1}_table_{table_idx+1}.png"
+                        f"debug_test/debug_page_{page_idx+1}_table_{table_idx+1}.png"
                     )
 
 
