@@ -10,10 +10,10 @@ def get_session():
     return Session()
 
 # Create
-def create_expense(name, amount, date, inflow, tags=None, remarks=None):
+def create_expense(name, amount, date, inflow, post_transaction_balance, tags=None, remarks=None):
     session = get_session()
     try:
-        new_expense = Expense(name=name, amount=amount, inflow=inflow, date=date, tags=tags, remarks=remarks)
+        new_expense = Expense(name=name, amount=amount, inflow=inflow, date=date, post_transaction_balance=post_transaction_balance, tags=tags, remarks=remarks)
         session.add(new_expense)
         session.commit()
         return new_expense
