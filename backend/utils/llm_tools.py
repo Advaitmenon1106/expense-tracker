@@ -1,4 +1,4 @@
-from mistralai import Mistral
+from mistralai.client import Mistral
 from dotenv import load_dotenv
 import os
 from PIL import Image
@@ -6,6 +6,8 @@ import io
 import base64
 import asyncio
 import yaml
+from ollama import Client
+
 
 load_dotenv()
 
@@ -57,3 +59,33 @@ async def send_image_to_mistral(images: list[Image.Image], system_prompt: str, h
     )
 
     return response.choices[0].message.content
+
+
+async def send_image_to_ollama(
+    images,
+    system_prompt: str,
+    human_prompt: str,
+):
+    client = Client(host="http://localhost:11434")
+
+    messages = [
+        {
+            "role": "system",
+            "content": system_prompt,
+        },
+        {
+            "role": "user",
+            "content": human_prompt,
+            "images": [pil_to_base64(img) for img in images],
+        },
+    ]
+
+    response = await asyncio.to_thread(
+        lambda: client.chat(
+            model="gemma4:e4b",
+            messages=messages,
+            keep_alive=0
+        )
+    )
+
+    return response["message"]["content"]
