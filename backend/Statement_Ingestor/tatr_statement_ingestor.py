@@ -1,12 +1,7 @@
 from transformers import AutoModelForObjectDetection, AutoImageProcessor
 from PIL import Image
 import torch
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-from pdf2image import convert_from_path
 from dotenv import load_dotenv
-import cv2
-import numpy as np
 import yaml
 from fastapi.datastructures import UploadFile
 import json
@@ -188,11 +183,7 @@ class DocIngestor:
                 for page in page_images
             ])
 
-            det_results = table_det_processor.post_process_object_detection(
-                outputs,
-                threshold=0.7,
-                target_sizes=target_sizes
-            )
+            det_results = table_det_processor.post_process_object_detection(outputs, threshold=0.7, target_sizes=target_sizes)
 
             padding = 20
 
@@ -209,34 +200,66 @@ class DocIngestor:
 
                     table_img = page_image.crop((x1, y1, x2, y2))
 
-                    page['tables'].append(table_img)
+                    page['tables'].append({
+                        "table_image": table_img,
+                        "is_statement": None,
+                        "table_structure": None
+                    })
 
-                table_imgs_to_undergo_classfn = page['tables']
+                table_imgs_to_undergo_classfn = [
+                    table["table_image"]
+                    for table in page["tables"]
+                ]
+
                 tasks.append(self.classify(table_imgs_to_undergo_classfn))
 
             results = await asyncio.gather(*tasks)
 
+
+
             for page_no, res in enumerate(results):
                 corresponding_page_obj = document['pages'][page_no]
-                assert len(corresponding_page_obj['tables']) == len(res) # check on AI hallucinations: the number of tables sent to the AI = number of classifications given as output
-                corresponding_page_obj['final_statement_tables'] = [corresponding_page_obj['tables'][i] for i in range(len(res)) if res[i]['is_statement'].lower() == "true"]
-
-
-        print()
+                assert len(corresponding_page_obj['tables']) == len(res)
+                corresponding_page_obj['final_statement_tables'] = []
                 
+                for tb_idx, single_res in enumerate(res):
+                    if single_res['is_statement'].lower() == 'false':
+                        corresponding_page_obj['tables'][tb_idx]['is_statement'] = False
+                    else:
+                        corresponding_page_obj['tables'][tb_idx]['is_statement'] = True
+                        corresponding_page_obj['final_statement_tables'].append(corresponding_page_obj['tables'][tb_idx])
+
+            print()
         
-    # structure extraction from image_entries['detected_tables_images']: -
+    # structure extraction from image_entries :-
 
 
     async def structure_extract(self):
         table_struct_processor = self.struct_processor
         table_struct_model = self.struct_model
         image_entries = self.all_inputs['images']
+        labels = table_struct_model.config.id2label
 
-        for file in image_entries:
-            file_table_structures = []
-            for page_no, img_arr in enumerate(file['detected_tables_images']):
-                prepared_inputs = table_struct_processor(img_arr, return_tensors="pt")  
+        for document in image_entries:
+            for page_num, page in enumerate(document['pages']):
+                detected_statement_images = [i['table_image'] for i in page['final_statement_tables']]
+                preprocessed_statement_inputs = table_struct_processor(detected_statement_images, return_tensors="pt")
+
+                with torch.inference_mode():
+                    structure_extracted = table_struct_model(**preprocessed_statement_inputs)
+
+                target_sizes = torch.tensor([
+                    img.size[::-1]
+                    for img in detected_statement_images
+                ])
+
+                str_results = table_struct_processor.post_process_object_detection(structure_extracted, threshold=0.7, target_sizes=target_sizes)
+
+                for i, res in enumerate(str_results):
+                    corresponding_table_obj = page['final_statement_tables'][i]
+                    labels_to_boxes = list(zip(res['labels'].tolist(), res['boxes'].tolist()))
+                    corresponding_table_obj['table_structure'] = res
+                    corresponding_table_obj['labels_and_boxes'] = labels_to_boxes
 
 
 # test script: -
