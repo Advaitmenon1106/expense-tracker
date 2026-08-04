@@ -13,5 +13,6 @@ class Expense(Base):
     amount = Column(Float, nullable=False)
     inflow = Column(Boolean, nullable=False)
     date = Column(Date, nullable=False)
+    post_transaction_balance = Column(Float, nullable=False)
     tags = Column(String, nullable=True)  # Optional field for tags
     remarks = Column(String, nullable=True)  # Optional field for remarks
