@@ -11,6 +11,13 @@ from pdf2image import convert_from_bytes
 import pandas as pd
 from backend.utils.llm_tools import send_image_to_mistral, send_image_to_ollama
 import re
+import json
+from docling.document_converter import DocumentConverter
+from docling.datamodel.base_models import DocumentStream
+from io import BytesIO
+import logging
+
+logging.basicConfig(level=logging.DEBUG, format='%(levelname)s: %(message)s')
 
 load_dotenv()
 
@@ -203,7 +210,7 @@ class DocIngestor:
                     page['tables'].append({
                         "table_image": table_img,
                         "is_statement": None,
-                        "table_structure": None
+                        "table_structure_raw": None
                     })
 
                 table_imgs_to_undergo_classfn = [
@@ -214,8 +221,6 @@ class DocIngestor:
                 tasks.append(self.classify(table_imgs_to_undergo_classfn))
 
             results = await asyncio.gather(*tasks)
-
-
 
             for page_no, res in enumerate(results):
                 corresponding_page_obj = document['pages'][page_no]
@@ -229,37 +234,53 @@ class DocIngestor:
                         corresponding_page_obj['tables'][tb_idx]['is_statement'] = True
                         corresponding_page_obj['final_statement_tables'].append(corresponding_page_obj['tables'][tb_idx])
 
-            print()
-        
-    # structure extraction from image_entries :-
 
+    async def docling_extract(self):
+        converter = DocumentConverter()
+        all_records = []
 
-    async def structure_extract(self):
-        table_struct_processor = self.struct_processor
-        table_struct_model = self.struct_model
-        image_entries = self.all_inputs['images']
-        labels = table_struct_model.config.id2label
+        for document in self.all_inputs["images"]:
+            for page in document["pages"]:
 
-        for document in image_entries:
-            for page_num, page in enumerate(document['pages']):
-                detected_statement_images = [i['table_image'] for i in page['final_statement_tables']]
-                preprocessed_statement_inputs = table_struct_processor(detected_statement_images, return_tensors="pt")
+                for idx, table in enumerate(page.get("final_statement_tables", [])):
 
-                with torch.inference_mode():
-                    structure_extracted = table_struct_model(**preprocessed_statement_inputs)
+                    # PIL Image -> in-memory stream
+                    buffer = BytesIO()
+                    table["table_image"].save(buffer, format="PNG")
+                    buffer.seek(0)
 
-                target_sizes = torch.tensor([
-                    img.size[::-1]
-                    for img in detected_statement_images
-                ])
+                    source = DocumentStream(
+                        name=f"page_{page['page_num']}_table_{idx}.png",
+                        stream=buffer
+                    )
 
-                str_results = table_struct_processor.post_process_object_detection(structure_extracted, threshold=0.7, target_sizes=target_sizes)
+                    try:
+                        result = await asyncio.to_thread(converter.convert, source)
+                        doc = result.document
 
-                for i, res in enumerate(str_results):
-                    corresponding_table_obj = page['final_statement_tables'][i]
-                    labels_to_boxes = list(zip(res['labels'].tolist(), res['boxes'].tolist()))
-                    corresponding_table_obj['table_structure'] = res
-                    corresponding_table_obj['labels_and_boxes'] = labels_to_boxes
+                        table["docling_tables"] = []
+
+                        for extracted_table in doc.tables:
+                            df = extracted_table.export_to_dataframe(doc=doc)
+                            records =  df.to_dict(orient='records')
+
+                            for record in records:
+                                record["_page_number"] = page["page_num"]
+                                record["_table_index"] = idx
+                            all_records.extend(records)
+
+                            table["docling_tables"].append({
+                                "dataframe": df,
+                                "records": records
+                            })
+
+                        print(f"Page {page['page_num']}, Table {idx}")
+                        print(table["docling_tables"])
+
+                    except Exception as e:
+                        print(f"Docling error: {e}")
+
+        self.extracted_records = all_records
 
 
 # test script: -
@@ -291,29 +312,39 @@ async def main():
         for doc in ingestor.all_inputs["images"]:
             print(f"Document: {doc['filename']}")
 
-            detected_tables = doc.get("detected_tables_images", [])
-
-            print(f"Pages with extracted tables: {len(detected_tables)}")
-
-            for page_idx, page_tables in enumerate(detected_tables):
-                print(
-                    f"Page {page_idx + 1}: "
-                    f"{len(page_tables)} selected tables"
+            for page_idx, page in enumerate(doc["pages"]):
+                statement_tables = page.get(
+                    "final_statement_tables", []
                 )
 
-                for table_idx, table_img in enumerate(page_tables):
+                print(
+                    f"Page {page_idx + 1}: "
+                    f"{len(statement_tables)} selected tables"
+                )
+
+                for table_idx, table in enumerate(statement_tables):
+                    table_img = table["table_image"]
+
                     print(
                         f"  Table {table_idx + 1}: "
                         f"{table_img.size}"
                     )
 
-                    # Optional: save crops to inspect
-                    # table_img.save(
-                    #     f"debug_test/debug_page_{page_idx+1}_table_{table_idx+1}.png"
-                    # )
-        
-        await ingestor.structure_extract()
+                    table_img.save(
+                        f"debug_test/debug_page_{page_idx+1}_table_{table_idx+1}.png"
+                    )
+
+        await ingestor.docling_extract()
+        return ingestor.extracted_records
+
+
+# if __name__ == "__main__":
+#     asyncio.run(main())
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    img_path = '/home/advait/expense-tracker/debug_test/debug_page_13_table_1.png'
+    # res = asyncio.run(send_image_to_ollama([Image.open(img_path)], system_prompt="""Given the image, read and extract the statement table values exactly as it is, as a list of valid JSONs. for each JSON your keys will be the column headers of the statement. No explanations, no elaborations""", human_prompt="Look at these images and extract the info as instructed"))
+    # print(json.loads(res.message.content))
+    res = asyncio.run(main())
+    print(res)
