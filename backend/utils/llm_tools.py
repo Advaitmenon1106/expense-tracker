@@ -7,7 +7,7 @@ import base64
 import asyncio
 import yaml
 from ollama import Client
-
+import torch
 
 load_dotenv()
 
@@ -61,8 +61,65 @@ async def send_image_to_mistral(images: list[Image.Image], system_prompt: str, h
     return response.choices[0].message.content
 
 
+async def send_image_to_huggingfaceLM(
+    images:list[Image.Image],
+    system_prompt:str,
+    human_prompt:str,
+    model,
+    processor
+):
+
+    messages = [
+        {
+            "role": "system",
+            "content": system_prompt
+        },
+        {
+            "role": "user",
+            "content": [
+                *[{
+                    "type": "image",
+                    "image": img.convert("RGB")
+                } for img in images],
+                {
+                    "type": "text",
+                    "text": human_prompt
+                }
+            ]
+        }
+    ]
+
+    inputs = processor.apply_chat_template(
+        messages,
+        tokenize=True,
+        add_generation_prompt=True,
+        return_dict=True,
+        return_tensors="pt",
+        enable_thinking=False
+    )
+    inputs = {
+        key: value.to(model.device) if torch.is_tensor(value) else value
+        for key, value in inputs.items()
+    }
+
+    with torch.inference_mode():
+        generated_ids = model.generate(
+            **inputs,
+            max_new_tokens=512
+        )
+
+    generated_ids = generated_ids[:, inputs["input_ids"].shape[1]:]
+
+    response = processor.batch_decode(
+        generated_ids,
+        skip_special_tokens=True
+    )[0]
+
+    return response
+
+
 async def send_image_to_ollama(
-    images,
+    images: Image.Image,
     system_prompt: str,
     human_prompt: str,
 ):
@@ -82,10 +139,11 @@ async def send_image_to_ollama(
 
     response = await asyncio.to_thread(
         lambda: client.chat(
-            model="gemma4:e4b",
+            model="hf.co/bartowski/OpenGVLab_InternVL3_5-1B-GGUF:Q4_K_M",
             messages=messages,
-            keep_alive=0
+            keep_alive=0,
+            think=False
         )
     )
 
-    return response["message"]["content"]
+    return response
