@@ -1,4 +1,4 @@
-from transformers import AutoModelForObjectDetection, AutoImageProcessor
+from transformers import AutoModelForObjectDetection, AutoImageProcessor, AutoProcessor, AutoModelForMultimodalLM, BitsAndBytesConfig
 from PIL import Image
 import torch
 from dotenv import load_dotenv
@@ -9,7 +9,7 @@ from pypdf import PdfReader, PdfWriter
 import io
 from pdf2image import convert_from_bytes
 import pandas as pd
-from backend.utils.llm_tools import send_image_to_mistral, send_image_to_ollama
+from backend.utils.llm_tools import send_image_to_mistral, send_image_to_huggingfaceLM
 import re
 import json
 from docling.document_converter import DocumentConverter
@@ -25,10 +25,13 @@ _det_processor = None
 _det_model = None
 _struct_processor = None
 _struct_model = None
+_huggingface_lm = None
+_huggingface_processor = None
 
 def ensure_models_loaded():
     global _det_processor, _det_model
     global _struct_processor, _struct_model
+    global _huggingface_lm, _huggingface_processor
 
     if _det_model is None:
         _det_processor = AutoImageProcessor.from_pretrained(
@@ -48,11 +51,31 @@ def ensure_models_loaded():
         )
         _struct_model.eval()
 
+    if _huggingface_lm is None:
+        quant_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_compute_dtype=torch.float16,
+            bnb_4bit_use_double_quant=True
+        )
+
+        MODEL_ID = "Qwen/Qwen3.5-4B"
+        _huggingface_processor = AutoProcessor.from_pretrained(MODEL_ID)
+
+        _huggingface_lm = AutoModelForMultimodalLM.from_pretrained(
+            MODEL_ID,
+            quantization_config=quant_config,
+            torch_dtype=torch.float16,
+            device_map="auto"
+        )
+
     return (
         _det_processor,
         _det_model,
         _struct_processor,
         _struct_model,
+        _huggingface_lm,
+        _huggingface_processor
     )
 
 
@@ -71,7 +94,7 @@ class DocIngestor:
         with open('backend/Statement_Ingestor/extraction_template.json', 'rb') as f:
             self.extraction_template = json.load(f)
 
-        self.det_processor, self.det_model, self.struct_processor, self.struct_model = ensure_models_loaded()
+        self.det_processor, self.det_model, self.struct_processor, self.struct_model, self.huggingface_model, self.huggingface_processor = ensure_models_loaded()
 
     def route_input(self):
         all_inputs = {
@@ -149,10 +172,12 @@ class DocIngestor:
 
     async def classify(self, imgs):
         async with self.sem:
-            response = await send_image_to_mistral(
+            response = await send_image_to_huggingfaceLM(
                 imgs,
                 self.prompts["classify_cropped_table"]["system"],
                 self.prompts["classify_cropped_table"]["human"],
+                model=self.huggingface_model,
+                processor=self.huggingface_processor,
             )
 
         if response.startswith("```"):
@@ -267,6 +292,10 @@ class DocIngestor:
                             for record in records:
                                 record["_page_number"] = page["page_num"]
                                 record["_table_index"] = idx
+                                for k, v in record.items():
+                                    if isinstance(v, str) and not v.strip():
+                                        record[k] = 0
+
                             all_records.extend(records)
 
                             table["docling_tables"].append({
